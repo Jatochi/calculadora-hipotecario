@@ -11,18 +11,21 @@ const creditoGet = async(req, res) => {
 
 const creditoPost = async(req, res) => {
     const { nCuotas, montoSolicitado, tasaAnual, fechaInicio } = req.body;
+
     const credito = Credito.build({nCuotas, montoSolicitado, tasaAnual, fechaInicio});
 
-    credito.guardarCredito()
-    .then(response  => {
-        res.json({
-            response
+    const listCuotas = credito.crearCuotas();
+
+    credito.guardarCredito(listCuotas)
+        .then(response  => {
+            res.json({
+                response
+            })
         })
-    })
-    .catch(error => {
-        console.log(error);
-        res.status(500).json('Error del servidor, favor contactar administrador.')
-    });
+        .catch(error => {
+            console.log(error);
+            res.status(500).json('Error del servidor, favor contactar administrador.')
+        });
 }
 
 module.exports = {

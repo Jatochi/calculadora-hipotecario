@@ -37,35 +37,46 @@ Credito.hasMany(Cuota, {
     foreignKey: 'creditoId'
 })
 
+Credito.prototype.calcularInteresMensual = function(){
+    return this.tasaAnual/12;
+}
+
 /**
- * Genera el listado de objetos de la clase Cuota perteneciente a un objeto credito.
+ * Genera el listado de objetos que representan una cuota.
  */
 Credito.prototype.crearCuotas = function(){
     const listCuotas = [];
-    const monto = Cuota.calcularValorCuota(this.montoSolicitado, this.nCuotas)
+    const interesMensual = this.calcularInteresMensual(this.tasaAnual);
+    const cuotaPeriodica = Cuota.calcularValorCuota(this.montoSolicitado, this.nCuotas, interesMensual);
+    let capitalPagado = 0;
     for (let i = 0; i < this.nCuotas; i++) {
-        const periodo = Cuota.calcularPeriodo(i, DateTime.now());
+        const capitalRestante = this.montoSolicitado - capitalPagado;
+        const interes = Cuota.calcularInteresPeriodo(capitalRestante, interesMensual);
+        const capital = cuotaPeriodica-interes
+        const periodo = Cuota.calcularRangoPeriodo(i, DateTime.now());
         const cuota = {
             periodo: i+1,
-            monto,
+            monto: cuotaPeriodica,
+            interes: interes,
+            capital: capital,
             inicioPeriodo: periodo.inicio,
             finPeriodo: periodo.final,
             creditoId: this.id
         };
         listCuotas.push(cuota);
+        capitalPagado += capital
     }
     return listCuotas;
 }
 
 /**
- * 
+ * Realiza la insercion del credito y sus cuotas en la Base de datos
  * @returns confirmacion de transaccion.
  */
-Credito.prototype.guardarCredito = function(){
+Credito.prototype.guardarCredito = function(cuotas){
     return new Promise( async (resolve, reject) => {
         const trans = await sequelize.transaction();
         try{
-            const cuotas = this.crearCuotas();
 
             const creditoCreated = await this.save({ transaction: trans });
 

@@ -14,6 +14,12 @@ const Cuota = sequelize.define('Cuota', {
         type: DataTypes.DECIMAL,
         allowNull: false
     },
+    interes: {
+        type: DataTypes.DECIMAL,
+    },
+    capital: {
+        type: DataTypes.DECIMAL,
+    },
     periodo:{
         type: DataTypes.INTEGER,
         allowNull: false
@@ -32,13 +38,26 @@ const Cuota = sequelize.define('Cuota', {
 });
 
 /**
- * Calcula el valor de los periodos de un credito.
+ * Calcula el valor de las cuotas de un credito. Utilizado el metodo Frances para este calculo
  * @param {INTEGER} monto 
  * @param {INTEGER} periodos 
+ * @param {FLOAT} interesMensual
  * @returns Integer con el valor del periodo del credito.
  */
-Cuota.calcularValorCuota = function(monto, periodos){
-    return monto/periodos;
+Cuota.calcularValorCuota = function(monto, periodos, interesMensual){
+    const resDenominador = 1 - ((1+interesMensual) ** -periodos);
+    const resFraccion = interesMensual/resDenominador
+    return Math.round(monto*resFraccion);
+}
+
+/**
+ * Calculo de interes a pagar en un periodo determinado. Utilizado el metodo Frances para este calculo
+ * @param {INTEGER} montoPeriodo 
+ * @param {FLOAT} interesMensual 
+ * @returns Integer con el valor del interes del periodo.
+ */
+ Cuota.calcularInteresPeriodo = function(montoPeriodo, interesMensual){
+    return Math.round(montoPeriodo*interesMensual);
 }
 
 /**
@@ -47,7 +66,7 @@ Cuota.calcularValorCuota = function(monto, periodos){
  * @param {DateTime} fecha_inicio 
  * @returns Objeto con inicio y fin del periodo.
  */
-Cuota.calcularPeriodo = function(periodo = 0, fecha_inicio = DateTime.now()) {
+Cuota.calcularRangoPeriodo = function(periodo = 0, fecha_inicio = DateTime.now()) {
     const fecha_periodo = fecha_inicio.plus({ months: periodo })
     return {
         inicio: fecha_periodo.startOf('month'),
