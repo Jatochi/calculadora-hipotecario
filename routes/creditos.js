@@ -11,10 +11,10 @@ const router = Router();
 router.get('/', creditoGet);
 
 router.post('/', [
-        check('nCuotas', 'Debe existir el numero de cuotas').not().isEmpty(),
-        check('montoSolicitado', 'Debe existir el monto solicitad').not().isEmpty(),
-        check('tasaAnual','Debe existir la tasa anual').not().isEmpty(),
-        check('fechaInicio','Debe existir la fecha de inicio del credito').not().isEmpty(),
+        check('nCuotas', 'Debe enviar un numero de cuotas valido (1-120)').isInt({min:1, max:120}),
+        check('montoSolicitado', 'Debe enviar un monto solicitado valido').isCurrency({allow_decimal:false}),
+        check('tasaAnual','Debe existir la tasa anual').isFloat({min:0, max:1}).toFloat(),
+        check('fechaInicio').isISO8601().toDate().withMessage('El formato de la fecha debe ser valido'),
         validarCampos,
         ], creditoPost);
 
